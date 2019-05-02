@@ -21,7 +21,7 @@ class Pendulums():
         self.max_y    =  len(lines[0]) + 0.5            #Viewer
         self.fext     = np.zeros(nb*DIMENSIONS)
         self.torque   = np.zeros(self.nb)
-        self.timeStep = 0.0001
+        self.timeStep = 0.01
         self.energy   = []
 
     def updateParam(self,param,energy):
@@ -67,7 +67,7 @@ class Pendulums():
             return lines
 
         def animate(i):
-            param,energy = dynamic.step(self.param,0.01,self.torque,self.fext)
+            param,energy = dynamic.step(self.param,self.timeStep,self.torque,self.fext)
             self.updateParam(param,energy)
             x,y = self.updateLinks()
             for _x,_y,line in zip(x,y,lines):
