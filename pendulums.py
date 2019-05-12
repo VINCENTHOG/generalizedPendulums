@@ -21,7 +21,7 @@ class Pendulums():
         self.max_y    =  len(lines[0]) + 0.5            #Viewer
         self.fext     = np.zeros(nb*DIMENSIONS)
         self.torque   = np.zeros(self.nb)
-        self.timeStep = 0.01
+        self.timeStep = 0.0001
         self.energy   = []
 
     def updateParam(self,param,energy):
@@ -53,7 +53,8 @@ class Pendulums():
             aline_y.append(mline_y)
         return aline_x,aline_y
 
-    def run(self):
+    def run(self,D,H,G,J,K,P):
+        sim    = dynamic.Dynamic(D,H,G,J,K,P)
         fig    = plt.figure(figsize=(10, 10))
         ax     = fig.add_subplot(111,frameon=True, autoscale_on=False, xlim=(self.min_x, self.max_x), ylim=(self.min_y, self.max_y))
         lines  = []
@@ -67,7 +68,7 @@ class Pendulums():
             return lines
 
         def animate(i):
-            param,energy = dynamic.step(self.param,self.timeStep,self.torque,self.fext)
+            param,energy = sim.step(self.param,0.01,self.torque,self.fext)
             self.updateParam(param,energy)
             x,y = self.updateLinks()
             for _x,_y,line in zip(x,y,lines):

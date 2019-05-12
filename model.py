@@ -8,8 +8,8 @@ import sys,os
 DEFAULT_LENGTH    = 1.0
 DEFAULT_MASS      = 1.0
 DEFAULT_COM_RATIO = 0.5
-MAX_NODE          = 40
-MOTHER_ID         = 777         #Don't touch :)
+MAX_NODE          = 40          # Feel free to change it
+MOTHER_ID         = 777         # Don't touch :)
 EQUATION          = 1
 DISPLAY           = 0
 
@@ -102,7 +102,11 @@ class Model():
     # Call to the sympy simplify method. 
     # CAUTION: AVOID TO CALL THIS FUNCTION IF THERE IS MORE THAN 10 NODES***
     def simplifyLagrangian(self,D,H,G):
-        print("\nSimplification...\n\n\n-- Matrix D:\n",simplify(D),"\n\nMatrix H:\n",simplify(H),"\n\nMatrix G:\n",simplify(G))
+        D = simplify(D)
+        H = simplify(H)
+        G = simplify(G)
+        print("\nSimplification...\n\n\n-- Matrix D:\n",D,"\n\nMatrix H:\n",H,"\n\nMatrix G:\n",G)
+        return D,H,G
     
     # Prints the jacobian of the generalized position matrix
     def jacobianGeneralizedPositionMatrix(self):
@@ -110,8 +114,10 @@ class Model():
         for node in self.nodes:
             model = model.row_insert(model.shape[0],Matrix([[node.pos_x]]))
             model = model.row_insert(model.shape[0],Matrix([[node.pos_y]]))
+        J = simplify(model.jacobian(self.q).T)
         print("\nTranspose Jacobian of phi(q) ")  
-        print(simplify(model.jacobian(self.q).T))
+        print(J)
+        return J
 
     # Creates your model
     # Use this method to add/remove nodes
@@ -122,7 +128,7 @@ class Model():
         mother_of_all.parent = mother_of_all
         parent               = mother_of_all
         try:
-            for i in range(2):
+            for i in range(5):
                self.createNode(DEFAULT_LENGTH,DEFAULT_MASS,parent,DEFAULT_COM_RATIO)
                parent = self.nodes[-1]
             # FOLLOWING LINES ARE AN EXAMPLE. CREATE YOUR OWN :)
@@ -162,23 +168,23 @@ class Model():
     def generateEulerLagrange(self):
         self.createVariables()
         self.derivModel()
-        k,p   = self.getEnergies()
+        K,P   = self.getEnergies()
         L     = Lagrange(self.nodes)
-        D,H,G = L.euler_lagrange(k,p,self.q,self.dq,self.ddq) # H is actually H*(dq**2)
+        D,H,G = L.euler_lagrange(K,P,self.q,self.dq,self.ddq) # H is actually H*(dq**2)
         try: 
             answer = input("Do you want to simplify the lagrangian?(Might take some time) \n\n[y/n]:")
-            if(answer == "y" or answer =="Y"):
-                self.simplifyLagrangian(D,H,G)
+            if(answer.lower() == "y"):
+                D,H,G = self.simplifyLagrangian(D,H,G)
             else:
                 print("\n\n-- Matrix D:\n",D,"\n\nMatrix H:\n",H,"\n\nMatrix G:\n",G)
         except:
             print("Don't know what you did but...")
             print("\n\n-- Matrix D:\n",D,"\n\nMatrix H:\n",H,"\n\nMatrix G:\n",G)
-        self.jacobianGeneralizedPositionMatrix()
+        J = self.jacobianGeneralizedPositionMatrix()
+        return D,H,G,J,K,P
     
     # Matplotlib display of your model 
-    # CAUTION: Make sure that dynamic.py has the proper dynamic and mechanical energy 
-    def displayModel(self):
+    def displayModel(self,D,H,G,J,K,P):
         ancest_table = []
         for node in self.nodes:
             ancest_table.append(np.hstack((node.ancest,int(node.id))))
@@ -186,22 +192,28 @@ class Model():
         lines        = self.createLines(ancest_table)
         lengths      = [n.l for n in self.nodes]
         pendulums    = Pendulums(self.node_counter,lines,lengths)
-        pendulums.run()
-        pendulums.displayEnergy()
-    
-    # Argument parser
+        pendulums.run(D,H,G,J,K,P)
+        # pendulums.displayEnergy()
+    # Runs the program
     def runScenario(self):
-        try:
-            scenario = int(sys.argv[1])
-            if (scenario == DISPLAY or scenario == EQUATION):
-                if(scenario == DISPLAY):
-                    self.displayModel()
-                elif(scenario == EQUATION):
-                    self.generateEulerLagrange()
-            else:
-                print("Invalid Argument\n\n0: Simulation\n1: Equations Computation")
-        except:
-            print("\n--No Argument--\n\n0: Simulation\n1: Equations Computation")
+        D,H,G,J,K,P = self.generateEulerLagrange()
+        looping     = True
+        while looping:
+            try: 
+                answer = input("\nDo you want to run the simulation?\n\n[y/n]:")
+                if(answer.lower() == "y"):
+                    self.displayModel(D,H,G,J,K,P)
+                    looping = False
+                elif(answer.lower() == "n"):
+                    print("\nYour equations are above.\n\n--Program Termination :)")
+                    looping = False
+                else:
+                    print("\n--Invalid input\n")
+                
+            except:
+                print("\n--Invalid input\n")
+        
+           
         
 
 if __name__ == "__main__":

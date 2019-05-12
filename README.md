@@ -6,13 +6,9 @@
 
 - Try it in the simulator.
 
-Test in simulator:
+Run the program:
 ```
-   $ python model.py 0 
-```
-Generate the equations:
-```
-   $ python model.py 1
+   $ python model.py 
 ```
 # Description
 
@@ -24,7 +20,7 @@ The simulator uses the basic equation of motion with a 4th order Runge-Kutta to 
 
 This software is ideal for beginners in physical simulation.
 
-# Prerequisites
+# Dependencies
 
 Sympy, Numpy and Matplotlib
 
